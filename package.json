@@ -1,0 +1,22 @@
+{
+  "name": "karcero",
+  "version": "1.0.0",
+  "description": "A video calling interview platform built with the MERN stack (MongoDB, Express.js, React, Node.js). Connect interviewers and candidates through seamless video conferencing with real-time communication capabilities.",
+  "main": "index.js",
+  "scripts": {
+    "build":"npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend ",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start":"npm run start --prefix backend"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/P4ndro/Karcero.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/P4ndro/Karcero/issues"
+  },
+  "homepage": "https://github.com/P4ndro/Karcero#readme"
+}
