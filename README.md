@@ -115,7 +115,10 @@ The application uses MongoDB with Mongoose for data modeling. The database conne
 
 - Ensure MongoDB is running locally or use MongoDB Atlas for cloud hosting
 - Update `DB_URL` in your backend `.env` file with your connection string
-- Example: `mongodb://localhost:27017/karcero` or `mongodb+srv://username:password@cluster.mongodb.net/karcero`
+- **Example formats:**
+  - Local: `mongodb://localhost:27017/karcero`
+  - Atlas: `mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<database>`
+- **⚠️ Never commit your actual connection string with real credentials to the repository**
 
 ## API Endpoints
 
