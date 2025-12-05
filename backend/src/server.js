@@ -45,7 +45,9 @@ if(ENV.NODE_ENV === "production"){
     const frontendPath = path.join(__dirname, "../../frontend/dist");
     console.log(`📁 Serving frontend from: ${frontendPath}`);
     app.use(express.static(frontendPath));
-    app.get("*", (req, res) => {
+    // Express 5 doesn't support "*" route - use catch-all middleware instead
+    // This will only catch routes that weren't handled by API routes or static files
+    app.use((req, res) => {
         res.sendFile(path.join(frontendPath, "index.html"));
     });
 }
