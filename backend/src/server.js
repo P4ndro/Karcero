@@ -4,6 +4,14 @@ import { ENV } from "./lib/env.js";
 import { connectDB, isDBConnected } from "./lib/db.js";
 import path from "path";
 
+// Log environment info at startup
+console.log("=".repeat(50));
+console.log("🚀 Starting Karcero Server...");
+console.log(`📦 NODE_ENV: ${ENV.NODE_ENV}`);
+console.log(`🔌 PORT: ${ENV.PORT}`);
+console.log(`🗄️  DB_URL: ${ENV.DB_URL ? "✅ Set" : "❌ Not set"}`);
+console.log("=".repeat(50));
+
 const app = express();
 
 // Middleware
@@ -11,6 +19,11 @@ app.use(express.json());
 
 const __dirname = path.resolve();
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error("❌ Express Error:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+});
 
 app.get("/health", (req, res) => {
     const dbStatus = isDBConnected() ? "connected" : "disconnected";
@@ -28,26 +41,66 @@ app.get("/books", (req, res) => {
 
 
 if(ENV.NODE_ENV === "production"){
-    app.use(express.static(path.join(__dirname, "../frontend/dist")));
+    // __dirname is backend/src/, so go up two levels to reach root, then into frontend/dist
+    const frontendPath = path.join(__dirname, "../../frontend/dist");
+    console.log(`📁 Serving frontend from: ${frontendPath}`);
+    app.use(express.static(frontendPath));
     app.get("*", (req, res) => {
-        res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
+        res.sendFile(path.join(frontendPath, "index.html"));
     });
 }
 
+// Handle uncaught exceptions
+process.on("uncaughtException", (error) => {
+    console.error("❌ Uncaught Exception:", error);
+    // Don't exit - keep server running
+});
+
+// Handle unhandled promise rejections
+process.on("unhandledRejection", (reason, promise) => {
+    console.error("❌ Unhandled Rejection at:", promise, "reason:", reason);
+    // Don't exit - keep server running
+});
 
 const startServer = async () => {
-    // Start server immediately - don't wait for DB connection
-    // Listen on 0.0.0.0 to accept connections from all network interfaces (required for deployment)
-    app.listen(ENV.PORT, "0.0.0.0", () => {
-        console.log(`🚀 Server is running on port ${ENV.PORT}`);
-        console.log(`📡 Server listening on 0.0.0.0:${ENV.PORT}`);
-        
-        // Try to connect to DB in background (non-blocking)
-        connectDB().catch((error) => {
-            console.error(`⚠️  Database connection failed, but server is running: ${error.message}`);
-            console.log("💡 Server will continue to run. Check your DB_URL and MongoDB connection.");
+    try {
+        // Validate PORT is set
+        if (!ENV.PORT) {
+            console.error("❌ PORT environment variable is not set!");
+            process.exit(1);
+        }
+
+        // Start server immediately - don't wait for DB connection
+        // Listen on 0.0.0.0 to accept connections from all network interfaces (required for deployment)
+        const server = app.listen(ENV.PORT, "0.0.0.0", () => {
+            console.log("=".repeat(50));
+            console.log(`✅ Server is running on port ${ENV.PORT}`);
+            console.log(`📡 Server listening on 0.0.0.0:${ENV.PORT}`);
+            console.log(`🌐 Health check: http://0.0.0.0:${ENV.PORT}/health`);
+            console.log("=".repeat(50));
+            
+            // Try to connect to DB in background (non-blocking)
+            connectDB().catch((error) => {
+                console.error(`⚠️  Database connection failed, but server is running: ${error.message}`);
+                console.log("💡 Server will continue to run. Check your DB_URL and MongoDB connection.");
+            });
         });
-    });
+
+        // Handle server errors
+        server.on("error", (error) => {
+            if (error.code === "EADDRINUSE") {
+                console.error(`❌ Port ${ENV.PORT} is already in use`);
+            } else {
+                console.error("❌ Server error:", error);
+            }
+            process.exit(1);
+        });
+
+    } catch (error) {
+        console.error(`❌ Error starting server: ${error.message}`);
+        console.error(error.stack);
+        process.exit(1);
+    }
 }
 
 startServer();  

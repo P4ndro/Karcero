@@ -9,3 +9,8 @@ export const ENV = {
     DB_URL: process.env.DB_URL,
     NODE_ENV: process.env.NODE_ENV || "development",
 }
+
+// Log if PORT is not set (for debugging)
+if (!process.env.PORT) {
+    console.warn("⚠️  PORT not set in environment, using default: 3000");
+}
