@@ -1,4 +1,6 @@
 import express from "express";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
 
 import { ENV } from "./lib/env.js";
 import { connectDB, isDBConnected } from "./lib/db.js";
@@ -17,7 +19,9 @@ const app = express();
 // Middleware
 app.use(express.json());
 
-const __dirname = path.resolve();
+// Get __dirname equivalent in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -43,12 +47,14 @@ app.get("/books", (req, res) => {
 if(ENV.NODE_ENV === "production"){
     // __dirname is backend/src/, so go up two levels to reach root, then into frontend/dist
     const frontendPath = path.join(__dirname, "../../frontend/dist");
-    console.log(`📁 Serving frontend from: ${frontendPath}`);
-    app.use(express.static(frontendPath));
+    const absoluteFrontendPath = path.resolve(frontendPath);
+    console.log(`📁 Serving frontend from: ${absoluteFrontendPath}`);
+    console.log(`📁 Current working directory: ${process.cwd()}`);
+    app.use(express.static(absoluteFrontendPath));
     // Express 5 doesn't support "*" route - use catch-all middleware instead
     // This will only catch routes that weren't handled by API routes or static files
     app.use((req, res) => {
-        res.sendFile(path.join(frontendPath, "index.html"));
+        res.sendFile(path.join(absoluteFrontendPath, "index.html"));
     });
 }
 
