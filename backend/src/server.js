@@ -1,11 +1,11 @@
 import express from "express";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
-
+import { serve } from "inngest/express";
 import { ENV } from "./lib/env.js";
 import { connectDB, isDBConnected } from "./lib/db.js";
 import path from "path";
-
+import cors from "cors";
 // Log environment info at startup
 console.log("=".repeat(50));
 console.log("🚀 Starting Karcero Server...");
@@ -18,12 +18,18 @@ const app = express();
 
 // Middleware
 app.use(express.json());
+app.use(cors({origin:ENV.CLIENT_URL, credentials:true}));
+
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Error handling middleware
+
+
+app.use("/api/inngest", serve({client : inngest, functions}));
+
+
 app.use((err, req, res, next) => {
     console.error("❌ Express Error:", err);
     res.status(500).json({ error: "Internal Server Error" });
