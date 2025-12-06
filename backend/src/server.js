@@ -4,6 +4,7 @@ import { dirname } from "path";
 import { serve } from "inngest/express";
 import { ENV } from "./lib/env.js";
 import { connectDB, isDBConnected } from "./lib/db.js";
+import { inngest, inngestFunctions } from "./lib/inngest.js";
 import path from "path";
 import cors from "cors";
 // Log environment info at startup
@@ -18,7 +19,13 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-app.use(cors({origin:ENV.CLIENT_URL, credentials:true}));
+// CORS configuration
+if (ENV.CLIENT_URL) {
+    app.use(cors({origin: ENV.CLIENT_URL, credentials: true}));
+} else {
+    // Allow all origins if CLIENT_URL not set (development only)
+    app.use(cors());
+}
 
 
 // Get __dirname equivalent in ES modules
@@ -27,7 +34,7 @@ const __dirname = dirname(__filename);
 
 
 
-app.use("/api/inngest", serve({client : inngest, functions}));
+app.use("/api/inngest", serve({client : inngest, functions: inngestFunctions}));
 
 
 app.use((err, req, res, next) => {
