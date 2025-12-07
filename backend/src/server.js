@@ -2,6 +2,7 @@ import express from "express";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import { serve } from "inngest/express";
+import { Webhook } from "@clerk/clerk-sdk-node";
 import { ENV } from "./lib/env.js";
 import { connectDB, isDBConnected } from "./lib/db.js";
 import { inngest, inngestFunctions } from "./lib/inngest.js";
@@ -19,7 +20,8 @@ console.log("=".repeat(50));
 
 const app = express();
 
-// Middleware
+// Middleware - need raw body for webhook verification
+app.use("/api/webhooks/clerk", express.raw({ type: "application/json" }));
 app.use(express.json());
 // CORS configuration
 if (ENV.CLIENT_URL) {
@@ -114,6 +116,64 @@ app.get("/debug/env", (req, res) => {
 
 app.get("/books", (req, res) => {
     res.status(200).json({"message": "successfully running books API"});
+});
+
+// Clerk webhook endpoint - receives webhooks and forwards to Inngest
+app.post("/api/webhooks/clerk", async (req, res) => {
+    try {
+        let payload;
+        
+        // Verify webhook signature if CLERK_SECRET_KEY is set
+        if (ENV.CLERK_SECRET_KEY) {
+            const webhook = new Webhook(ENV.CLERK_SECRET_KEY);
+            // req.body is raw Buffer from express.raw() middleware
+            payload = await webhook.verify(req.body, {
+                "svix-id": req.headers["svix-id"],
+                "svix-timestamp": req.headers["svix-timestamp"],
+                "svix-signature": req.headers["svix-signature"],
+            });
+        } else {
+            // If no secret key, parse JSON body directly (for development)
+            console.warn("⚠️  CLERK_SECRET_KEY not set - webhook verification skipped");
+            payload = typeof req.body === "string" ? JSON.parse(req.body) : 
+                     Buffer.isBuffer(req.body) ? JSON.parse(req.body.toString()) : req.body;
+        }
+        
+        const eventType = payload.type;
+        const eventData = payload.data;
+        
+        console.log(`📥 Received Clerk webhook: ${eventType}`);
+        
+        // Forward events to Inngest
+        if (eventType === "user.created") {
+            await inngest.send({
+                name: "clerk.user.created",
+                data: {
+                    id: eventData.id,
+                    email_addresses: eventData.email_addresses || [],
+                    first_name: eventData.first_name || "",
+                    last_name: eventData.last_name || "",
+                    image_url: eventData.image_url || "",
+                }
+            });
+            console.log("✅ Sent clerk.user.created event to Inngest");
+        } else if (eventType === "user.deleted") {
+            await inngest.send({
+                name: "clerk.user.deleted",
+                data: {
+                    id: eventData.id,
+                }
+            });
+            console.log("✅ Sent clerk.user.deleted event to Inngest");
+        } else {
+            console.log(`ℹ️  Unhandled event type: ${eventType}`);
+        }
+        
+        res.status(200).json({ received: true, eventType });
+    } catch (error) {
+        console.error("❌ Clerk webhook error:", error);
+        res.status(400).json({ error: "Webhook verification failed", message: error.message });
+    }
 });
 
 
