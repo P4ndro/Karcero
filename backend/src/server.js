@@ -34,7 +34,11 @@ const __dirname = dirname(__filename);
 
 
 
-app.use("/api/inngest", serve({client : inngest, functions: inngestFunctions}));
+app.use("/api/inngest", serve({
+    client: inngest, 
+    functions: inngestFunctions,
+    signingKey: ENV.INNGEST_SIGNING_KEY
+}));
 
 
 app.use((err, req, res, next) => {
