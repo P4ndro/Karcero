@@ -13,6 +13,8 @@ console.log("🚀 Starting Karcero Server...");
 console.log(`📦 NODE_ENV: ${ENV.NODE_ENV}`);
 console.log(`🔌 PORT: ${ENV.PORT}`);
 console.log(`🗄️  DB_URL: ${ENV.DB_URL ? "✅ Set" : "❌ Not set"}`);
+console.log(`🔑 INNGEST_EVENT_KEY: ${ENV.INNGEST_EVENT_KEY ? "✅ Set" : "❌ Not set"}`);
+console.log(`🔐 INNGEST_SIGNING_KEY: ${ENV.INNGEST_SIGNING_KEY ? "✅ Set" : "❌ Not set"}`);
 console.log("=".repeat(50));
 
 const app = express();
@@ -33,6 +35,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 
+
+// Inngest endpoint - signing key is required for authentication
+if (!ENV.INNGEST_SIGNING_KEY) {
+    console.warn("⚠️  WARNING: INNGEST_SIGNING_KEY is not set! Inngest sync will fail.");
+}
 
 app.use("/api/inngest", serve({
     client: inngest, 

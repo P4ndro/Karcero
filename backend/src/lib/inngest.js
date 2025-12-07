@@ -7,7 +7,7 @@ import { ENV } from "./env.js";
 export const inngest = new Inngest({
     id: "karcero",
     eventKey: ENV.INNGEST_EVENT_KEY,
-    signingKey: ENV.INNGEST_SIGNING_KEY,
+    // Note: signingKey should be passed to serve(), not here
 });
 
 
