@@ -14,22 +14,30 @@ if (process.env.NODE_ENV === "production") {
 
 // Try to get signing key with multiple methods to catch any issues
 const getSigningKey = () => {
-    // Try direct access
+    // Try correct name first
     let key = process.env.INNGEST_SIGNING_KEY;
     if (key) return key.trim();
+    
+    // Try common typo: INNGEST_SIGNIN_KEY (missing G)
+    key = process.env.INNGEST_SIGNIN_KEY;
+    if (key) {
+        console.warn("⚠️  Found INNGEST_SIGNIN_KEY (typo - missing 'G'). Please rename to INNGEST_SIGNING_KEY in Sevalla!");
+        return key.trim();
+    }
     
     // Try with bracket notation (in case of special chars)
     key = process.env["INNGEST_SIGNING_KEY"];
     if (key) return key.trim();
     
-    // Try all env vars and find any that might be it (case-insensitive)
+    // Try all env vars and find any that might be it (case-insensitive, includes common typos)
     const envKeys = Object.keys(process.env);
     const signingKeyVar = envKeys.find(k => 
-        k.toLowerCase().includes("signing") && 
+        (k.toLowerCase().includes("signin") || k.toLowerCase().includes("signing")) && 
         k.toLowerCase().includes("inngest")
     );
-    if (signingKeyVar) {
-        console.log(`⚠️  Found potential signing key with different name: ${signingKeyVar}`);
+    if (signingKeyVar && signingKeyVar !== "INNGEST_SIGNING_KEY") {
+        console.warn(`⚠️  Found potential signing key with different name: ${signingKeyVar}`);
+        console.warn(`⚠️  Please rename it to INNGEST_SIGNING_KEY in Sevalla for consistency!`);
         return process.env[signingKeyVar]?.trim();
     }
     
