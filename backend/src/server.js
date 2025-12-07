@@ -53,10 +53,22 @@ if (!signingKeyFromEnv && !signingKeyFromProcess) {
     console.log("✅ INNGEST_SIGNING_KEY is set (length: " + keyToUse.length + " characters)");
 }
 
+// Use the signing key - try fallback if available
+const signingKey = signingKeyFromEnv || signingKeyFromProcess;
+const fallbackKey = process.env.INNGEST_SIGNING_KEY_FALLBACK;
+
+if (signingKey) {
+    console.log("🔑 Using primary signing key");
+} else if (fallbackKey) {
+    console.log("🔑 Using fallback signing key");
+} else {
+    console.warn("⚠️  No signing key available!");
+}
+
 app.use("/api/inngest", serve({
     client: inngest, 
     functions: inngestFunctions,
-    signingKey: signingKeyFromEnv || signingKeyFromProcess || undefined
+    signingKey: signingKey || fallbackKey || undefined
 }));
 
 
