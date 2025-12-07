@@ -65,10 +65,23 @@ if (signingKey) {
     console.warn("⚠️  No signing key available!");
 }
 
+// Try multiple possible environment variable names (in case of typos or platform differences)
+const possibleSigningKeys = [
+    process.env.INNGEST_SIGNING_KEY,
+    process.env.INNGEST_SIGNING_KEY?.trim(),
+    process.env["INNGEST_SIGNING_KEY"],
+    signingKey,
+    fallbackKey
+].filter(Boolean);
+
+const finalSigningKey = possibleSigningKeys[0];
+
+console.log("🔍 Final signing key check:", finalSigningKey ? `Found (${finalSigningKey.length} chars)` : "NOT FOUND");
+
 app.use("/api/inngest", serve({
     client: inngest, 
     functions: inngestFunctions,
-    signingKey: signingKey || fallbackKey || undefined
+    signingKey: finalSigningKey || undefined
 }));
 
 

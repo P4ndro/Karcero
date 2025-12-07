@@ -3,6 +3,14 @@ import dotenv from "dotenv";
 
 dotenv.config({quiet: true});
 
+// Debug: Log all environment variables that start with INNGEST
+if (process.env.NODE_ENV === "production") {
+    console.log("🔍 All INNGEST-related env vars:");
+    Object.keys(process.env).filter(key => key.includes("INNGEST")).forEach(key => {
+        const value = process.env[key];
+        console.log(`  ${key}: ${value ? `Set (${value.length} chars, starts with: ${value.substring(0, 10)}...)` : "Not set"}`);
+    });
+}
 
 export const ENV = {
     PORT: process.env.PORT || 3000,
