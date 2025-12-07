@@ -86,6 +86,18 @@ app.get("/health", (req, res) => {
     });
 });
 
+// Debug endpoint to check environment variables (remove in production if needed)
+app.get("/debug/env", (req, res) => {
+    res.status(200).json({
+        "INNGEST_SIGNING_KEY_set": !!process.env.INNGEST_SIGNING_KEY,
+        "INNGEST_SIGNING_KEY_length": process.env.INNGEST_SIGNING_KEY?.length || 0,
+        "INNGEST_SIGNING_KEY_preview": process.env.INNGEST_SIGNING_KEY ? 
+            process.env.INNGEST_SIGNING_KEY.substring(0, 10) + "..." : "Not set",
+        "ENV_INNGEST_SIGNING_KEY_set": !!ENV.INNGEST_SIGNING_KEY,
+        "ENV_INNGEST_SIGNING_KEY_length": ENV.INNGEST_SIGNING_KEY?.length || 0,
+    });
+});
+
 
 app.get("/books", (req, res) => {
     res.status(200).json({"message": "successfully running books API"});
