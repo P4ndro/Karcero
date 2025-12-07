@@ -39,12 +39,15 @@ const __dirname = dirname(__filename);
 // Inngest endpoint - signing key is required for authentication
 if (!ENV.INNGEST_SIGNING_KEY) {
     console.warn("⚠️  WARNING: INNGEST_SIGNING_KEY is not set! Inngest sync will fail.");
+    console.warn("⚠️  Please set INNGEST_SIGNING_KEY in your Sevalla environment variables.");
+} else {
+    console.log("✅ INNGEST_SIGNING_KEY is set (length: " + ENV.INNGEST_SIGNING_KEY.length + " characters)");
 }
 
 app.use("/api/inngest", serve({
     client: inngest, 
     functions: inngestFunctions,
-    signingKey: ENV.INNGEST_SIGNING_KEY
+    signingKey: ENV.INNGEST_SIGNING_KEY || undefined
 }));
 
 
